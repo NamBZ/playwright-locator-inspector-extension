@@ -1,0 +1,323 @@
+/* ============================================
+   Playwright Locator Inspector — Styles
+   ============================================ */
+
+/* --- Tooltip --- */
+#pw-locator-tooltip {
+  position: fixed;
+  z-index: 2147483647; /* Maximum z-index to stay on top */
+  pointer-events: none; /* Never block clicks */
+  background: #1e1e2e;
+  color: #cdd6f4;
+  font-family: 'Segoe UI', 'Consolas', 'Monaco', monospace;
+  font-size: 13px;
+  line-height: 1.4;
+  padding: 6px 12px;
+  border-radius: 6px;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.35), 0 0 0 1px rgba(255, 255, 255, 0.06);
+  white-space: nowrap;
+  max-width: 420px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  opacity: 0;
+  transform: translateY(4px);
+  transition: opacity 0.15s ease, transform 0.15s ease;
+}
+
+/* Visible state */
+#pw-locator-tooltip.pw-visible {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+/* "Copied!" feedback state */
+#pw-locator-tooltip.pw-copied {
+  background: #1e3a2f;
+  color: #a6e3a1;
+  border: 1px solid #a6e3a140;
+}
+
+/* Locator row layout */
+#pw-locator-tooltip .pw-locator-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+#pw-locator-tooltip .pw-css-row {
+  margin-top: 3px;
+  opacity: 0.75;
+  font-size: 12px;
+}
+
+#pw-locator-tooltip .pw-locator-label {
+  flex-shrink: 0;
+  font-size: 12px;
+}
+
+/* Playwright locator text (yellow) */
+#pw-locator-tooltip .pw-locator-text {
+  color: #f9e2af;
+  font-weight: 600;
+}
+
+/* CSS selector text (cyan) */
+#pw-locator-tooltip .pw-css-text {
+  color: #89dceb;
+  font-weight: 400;
+}
+
+/* Grid text (orange) */
+#pw-locator-tooltip .pw-grid-text {
+  color: #fab387;
+  font-weight: 400;
+}
+
+.pw-grid-code {
+  color: #fab387;
+}
+
+/* --- Element Highlight --- */
+.pw-locator-highlight {
+  outline: 2px solid #89b4fa !important;
+  outline-offset: 1px !important;
+  transition: outline-color 0.12s ease !important;
+}
+
+/* --- ESC Info Banner (top center) --- */
+#pw-locator-esc-banner {
+  position: fixed;
+  top: 12px;
+  left: 50%;
+  transform: translateX(-50%) translateY(-8px);
+  z-index: 2147483647;
+  background: #1e1e2e;
+  color: #cdd6f4;
+  font-family: 'Segoe UI', 'Consolas', 'Monaco', monospace;
+  font-size: 13px;
+  line-height: 1.4;
+  padding: 8px 16px;
+  border-radius: 8px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.4), 0 0 0 1px rgba(255, 255, 255, 0.08);
+  cursor: pointer;
+  user-select: none;
+  opacity: 0;
+  transition: opacity 0.2s ease, transform 0.2s ease;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+#pw-locator-esc-banner.pw-visible {
+  opacity: 1;
+  transform: translateX(-50%) translateY(0);
+}
+
+#pw-locator-esc-banner:hover {
+  background: #2a2a3e;
+}
+
+#pw-locator-esc-banner .pw-esc-icon {
+  font-size: 14px;
+}
+
+#pw-locator-esc-banner .pw-esc-key {
+  display: inline-block;
+  background: #45475a;
+  color: #f9e2af;
+  font-size: 11px;
+  font-weight: 700;
+  padding: 1px 6px;
+  border-radius: 4px;
+  border: 1px solid #585b70;
+  margin: 0 2px;
+}
+
+/* ============================================
+   Copy Modal
+   ============================================ */
+
+/* Overlay */
+#pw-locator-modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  z-index: 2147483647;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  opacity: 0;
+  transition: opacity 0.15s ease;
+}
+
+#pw-locator-modal-overlay.pw-visible {
+  opacity: 1;
+}
+
+/* Modal box */
+.pw-modal-box {
+  background: #1e1e2e;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 12px;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5);
+  padding: 16px 20px;
+  min-width: 360px;
+  max-width: 600px;
+  font-family: 'Segoe UI', 'Consolas', 'Monaco', monospace;
+  color: #cdd6f4;
+}
+
+/* Header */
+.pw-modal-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 14px;
+  padding-bottom: 10px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.pw-modal-title {
+  font-size: 14px;
+  font-weight: 700;
+  color: #cdd6f4;
+}
+
+.pw-modal-close {
+  background: none;
+  border: none;
+  color: #6c7086;
+  font-size: 20px;
+  cursor: pointer;
+  padding: 0 4px;
+  line-height: 1;
+  transition: color 0.12s ease;
+}
+
+.pw-modal-close:hover {
+  color: #f38ba8;
+}
+
+/* Each locator row */
+.pw-modal-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 10px;
+}
+
+.pw-modal-row:last-child {
+  margin-bottom: 0;
+}
+
+.pw-modal-label {
+  flex-shrink: 0;
+  font-size: 12px;
+  color: #a6adc8;
+  min-width: 90px;
+}
+
+/* Code display */
+.pw-modal-code {
+  flex: 1;
+  background: #313244;
+  padding: 6px 10px;
+  border-radius: 6px;
+  font-size: 13px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  border: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.pw-playwright-code {
+  color: #f9e2af;
+}
+
+.pw-css-code {
+  color: #89dceb;
+}
+
+/* Copy button */
+.pw-modal-copy-btn {
+  flex-shrink: 0;
+  background: #45475a;
+  color: #cdd6f4;
+  border: 1px solid #585b70;
+  border-radius: 6px;
+  padding: 5px 12px;
+  font-size: 12px;
+  cursor: pointer;
+  transition: all 0.12s ease;
+  white-space: nowrap;
+}
+
+.pw-modal-copy-btn:hover {
+  background: #585b70;
+}
+
+.pw-modal-copy-btn.pw-copied {
+  background: #1e3a2f;
+  color: #a6e3a1;
+  border-color: #a6e3a140;
+}
+
+/* --- Grid Section in Modal --- */
+.pw-modal-divider {
+  height: 1px;
+  background: rgba(255, 255, 255, 0.08);
+  margin: 12px 0 8px;
+}
+
+.pw-modal-section-title {
+  font-size: 12px;
+  font-weight: 700;
+  color: #fab387;
+  margin-bottom: 8px;
+}
+
+.pw-modal-grid-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 6px;
+}
+
+.pw-modal-grid-row:last-child {
+  margin-bottom: 0;
+}
+
+.pw-modal-grid-label {
+  flex-shrink: 0;
+  font-size: 11px;
+  color: #a6adc8;
+  min-width: 60px;
+  text-align: right;
+}
+
+.pw-modal-grid-input {
+  flex: 1;
+  background: #313244;
+  color: #cdd6f4;
+  padding: 5px 8px;
+  border-radius: 4px;
+  font-size: 12px;
+  font-family: 'Consolas', 'Monaco', monospace;
+  border: 1px solid rgba(255, 255, 255, 0.05);
+  outline: none;
+  cursor: text;
+}
+
+.pw-modal-grid-input:focus {
+  border-color: #89b4fa;
+}
+
+.pw-modal-grid-input.pw-grid-code {
+  color: #fab387;
+  font-weight: 600;
+}
