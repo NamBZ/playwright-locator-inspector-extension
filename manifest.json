@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
   "name": "Playwright Locator Inspector",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "Hover to inspect elements and generate Playwright locator strings. Click to copy.",
   "icons": {
     "16": "icons/icon-16.png",

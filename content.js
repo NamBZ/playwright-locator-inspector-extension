@@ -95,8 +95,24 @@
   function generateLocator(el) {
     const tag = el.tagName.toLowerCase();
 
-    // --- 1. Has id → "#id" (HIGHEST PRIORITY) ---
-    if (el.id) return `#${el.id}`;
+    // --- 1. Image with alt/title/src → "img:..." ---
+    if (tag === "img" || el.getAttribute("role") === "img") {
+      const alt = cleanText(el.getAttribute("alt"));
+      if (alt) return `img:${alt}`;
+
+      const title = cleanText(el.getAttribute("title"));
+      if (title) return `img:${title}`;
+
+      // 👉 NEW: fallback theo src
+      const src = el.getAttribute("src");
+      if (src) {
+        // lấy phần cuối của path (vd: dong.png)
+        const fileName = src.split('/').pop();
+        if (fileName) {
+          return `img[src*="${fileName}"]`;
+        }
+      }
+    }
 
     // --- 2. Button with text → "button:Text" ---
     if (tag === "button" || el.getAttribute("role") === "button" || (tag === "input" && (el.type === "button" || el.type === "submit" || el.type === "reset"))) {
@@ -109,39 +125,34 @@
       if (text) return `button:${text}`;
     }
 
-    // --- 3. Link (<a>) → "link:Text" ---
+    // --- 3. Has id → "#id" (HIGHEST PRIORITY) ---
+    if (el.id) return `#${el.id}`;
+
+    // --- 4. Link (<a>) → "link:Text" ---
     if (tag === "a" || el.getAttribute("role") === "link") {
       const text = getVisibleText(el);
       if (text) return `link:${text}`;
     }
 
-    // --- 4. Input / Textarea ---
+    // --- 5. Input / Textarea ---
     if (tag === "input" || tag === "textarea" || tag === "select" || el.getAttribute("role") === "textbox") {
-      // 4a. Has placeholder → "placeholder:Text"
+      // 5a. Has placeholder → "placeholder:Text"
       const placeholder = cleanText(el.getAttribute("placeholder"));
       if (placeholder) return `placeholder:${placeholder}`;
 
-      // 4b. Has associated label → "label:Text"
+      // 5b. Has associated label → "label:Text"
       const label = getAssociatedLabel(el);
       if (label) return `label:${label}`;
 
-      // 4c. Fallback → "textbox:Name"
+      // 5c. Fallback → "textbox:Name"
       const name = cleanText(el.getAttribute("name") || el.getAttribute("aria-label") || el.id || "");
       if (name) return `textbox:${name}`;
     }
 
-    // --- 5. Label → "label:Text" ---
+    // --- 6. Label → "label:Text" ---
     if (tag === "label") {
       const text = getVisibleText(el);
       if (text) return `label:${text}`;
-    }
-
-    // --- 6. Image with alt/title → "img:Title" ---
-    if (tag === "img" || el.getAttribute("role") === "img") {
-      const alt = cleanText(el.getAttribute("alt"));
-      if (alt) return `img:${alt}`;
-      const title = cleanText(el.getAttribute("title"));
-      if (title) return `img:${title}`;
     }
 
     // --- 7. Element with aria-label → "label:Text" ---
@@ -159,12 +170,8 @@
       if (val) return `${tag}[${attr}]:${val}`;
     }
 
-    // --- 10. Has class → ".class" ---
-    const firstClass = el.classList?.[0];
-    if (firstClass) return `.${firstClass}`;
-
-    // --- 11. Fallback → "tag" ---
-    return tag;
+    // --- 10. Fallback → CSS selector ---
+    return generateCssSelector(el);
   }
 
   // ============================================
@@ -450,6 +457,28 @@
   }
 
   /**
+   * Handle mousedown: block native element behavior (e.g. onmousedown handlers).
+   * Runs in capture phase BEFORE the element's own mousedown fires.
+   * @param {MouseEvent} e
+   */
+  function onMouseDown(e) {
+    // Let modal handle its own clicks
+    if (modal) return;
+
+    // Don't block our own elements
+    const el = e.target;
+    if (el === tooltip || (tooltip && tooltip.contains(el))) return;
+    if (el === escBanner || (escBanner && escBanner.contains(el))) return;
+    if (el.id === "pw-locator-tooltip" || el.id === "pw-locator-esc-banner") return;
+
+    // Block native mousedown behavior (focus, onmousedown handlers, etc.)
+    e.preventDefault();
+    e.stopPropagation();
+    e.stopImmediatePropagation();
+  }
+
+
+  /**
    * Handle click: show modal with locator options.
    * @param {MouseEvent} e
    */
@@ -683,6 +712,7 @@
     isActive = true;
     createTooltip();
     createEscBanner();
+    document.addEventListener("mousedown", onMouseDown, true);
     document.addEventListener("mousemove", onMouseMove, true);
     document.addEventListener("click", onClick, true);
     document.addEventListener("keydown", onKeyDown, true);
@@ -694,6 +724,7 @@
   function deactivate() {
     if (!isActive) return;
     isActive = false;
+    document.removeEventListener("mousedown", onMouseDown, true);
     document.removeEventListener("mousemove", onMouseMove, true);
     document.removeEventListener("click", onClick, true);
     document.removeEventListener("keydown", onKeyDown, true);
