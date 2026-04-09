@@ -299,6 +299,118 @@
   }
 
   // ============================================
+  // 1d. ARIA SNAPSHOT GENERATION
+  // ============================================
+
+  /**
+   * Approximate Playwright's toMatchAriaSnapshot YAML tree.
+   * @param {HTMLElement} rootElement
+   * @returns {string}
+   */
+  function computeAriaSnapshot(rootElement) {
+    function walk(node, depth) {
+      if (node.nodeType === Node.TEXT_NODE) {
+        const text = node.textContent.replace(/\s+/g, ' ').trim();
+        if (text) {
+          return [`${"  ".repeat(depth)}- text "${text}"`];
+        }
+        return [];
+      }
+      if (node.nodeType !== Node.ELEMENT_NODE) return [];
+      
+      const style = window.getComputedStyle(node);
+      if (style.display === 'none' || style.visibility === 'hidden') return [];
+      
+      let role = node.getAttribute('role');
+      if (!role) {
+        const tag = node.tagName.toLowerCase();
+        const roleMap = {
+          'button': 'button', 'a': 'link', 'h1': 'heading', 'h2': 'heading', 'h3': 'heading', 'h4': 'heading', 'h5': 'heading', 'h6': 'heading',
+          'ul': 'list', 'ol': 'list', 'li': 'listitem',
+          'input': node.type === 'checkbox' ? 'checkbox' : (node.type === 'radio' ? 'radio' : 'textbox'),
+          'textarea': 'textbox', 'img': 'img', 'nav': 'navigation', 'main': 'main', 'header': 'banner', 'footer': 'contentinfo',
+          'p': 'paragraph', 'select': 'combobox', 'table': 'table', 'tr': 'row', 'td': 'cell', 'th': 'columnheader',
+          'thead': 'rowgroup', 'tbody': 'rowgroup', 'tfoot': 'rowgroup',
+          'section': 'region', 'aside': 'complementary', 'figure': 'figure', 'dialog': 'dialog',
+        };
+        role = roleMap[tag];
+      }
+      
+      let name = node.getAttribute('aria-label') || node.getAttribute('title') || node.getAttribute('alt');
+      const rolesUsingInnerTextForName = ['button', 'link', 'cell', 'columnheader', 'row', 'heading', 'checkbox', 'radio', 'listitem'];
+      if (!name && role && rolesUsingInnerTextForName.includes(role)) {
+        let innerText = (node.innerText || "").replace(/\n/g, ' ').replace(/\s+/g, ' ').trim();
+        if (innerText) {
+          name = innerText;
+        }
+      }
+      
+      let lineLevelAttr = '';
+      let lineStateAttr = '';
+      if (role === 'heading') {
+        const match = node.tagName.match(/^H(\d)$/i);
+        const ariaLevel = node.getAttribute('aria-level');
+        if (ariaLevel) lineLevelAttr = ` [level=${ariaLevel}]`;
+        else if (match) lineLevelAttr = ` [level=${match[1]}]`;
+      }
+      if (node.hasAttribute('disabled')) lineStateAttr += ` [disabled=true]`;
+      if (node.hasAttribute('checked') || node.checked) lineStateAttr += ` [checked=true]`;
+      if (node.hasAttribute('aria-expanded')) lineStateAttr += ` [expanded=${node.getAttribute('aria-expanded')}]`;
+      
+      let childrenOutput = [];
+      const isLeafControl = ['button', 'link', 'img', 'checkbox', 'radio', 'textbox', 'combobox'].includes(role);
+      
+      let nodeValue = '';
+      if (node.tagName === 'INPUT' || node.tagName === 'TEXTAREA') {
+        if (node.type !== 'checkbox' && node.type !== 'radio' && node.type !== 'button' && node.type !== 'submit') {
+          nodeValue = node.value || "";
+        }
+      } else if (node.tagName === 'SELECT' && node.selectedIndex >= 0) {
+        nodeValue = node.options[node.selectedIndex]?.text || "";
+      }
+      
+      for (const child of node.childNodes) {
+        const childRes = walk(child, depth + (role ? 1 : 0));
+        if (childRes.length) {
+          childrenOutput.push(...childRes);
+        }
+      }
+      
+      if (role) {
+        if (isLeafControl) {
+          childrenOutput = [];
+        } else {
+          const hasOnlyText = childrenOutput.length > 0 && childrenOutput.every(line => line.trim().startsWith('- text '));
+          if (hasOnlyText && name) {
+            childrenOutput = [];
+          }
+        }
+        
+        let headerLine = `${"  ".repeat(depth)}- ${role}`;
+        if (name) {
+          headerLine += ` "${name.replace(/"/g, '\\"')}"`;
+        }
+        headerLine += lineLevelAttr + lineStateAttr;
+        
+        if (nodeValue) {
+          headerLine += `: ${nodeValue.replace(/\n/g, ' ')}`;
+          return [headerLine];
+        } else if (childrenOutput.length > 0) {
+          headerLine += ':';
+          return [headerLine, ...childrenOutput];
+        } else {
+          return [headerLine];
+        }
+      } else {
+        return childrenOutput;
+      }
+    }
+    
+    const lines = walk(rootElement, 0);
+    return lines.join('\n');
+  }
+
+  // ============================================
   // 2. TOOLTIP MANAGEMENT
   // ============================================
 
@@ -501,9 +613,10 @@
     const locator = generateLocator(el);
     const cssSelector = generateCssSelector(el);
     const gridSelector = generateGridSelector(el);
+    const ariaSnapshot = computeAriaSnapshot(el);
 
     // Show modal with all options
-    showCopyModal(locator, cssSelector, gridSelector);
+    showCopyModal(locator, cssSelector, gridSelector, ariaSnapshot);
   }
 
   // ============================================
@@ -515,8 +628,9 @@
    * @param {string} locator
    * @param {string} cssSelector
    * @param {string|null} gridSelector
+   * @param {string} ariaSnapshot
    */
-  function showCopyModal(locator, cssSelector, gridSelector) {
+  function showCopyModal(locator, cssSelector, gridSelector, ariaSnapshot) {
     if (modal) destroyCopyModal();
 
     // Pause hover/highlight while modal is open
@@ -533,6 +647,11 @@
         <span class="pw-modal-label">🎭 Playwright</span>
         <code class="pw-modal-code pw-playwright-code">${escapeHtml(locator)}</code>
         <button class="pw-modal-copy-btn" data-value="${escapeAttr(locator)}">📋 Copy</button>
+      </div>
+      <div class="pw-modal-row">
+        <span class="pw-modal-label">🧩 Aria Snap</span>
+        <code class="pw-modal-code pw-aria-code">${escapeHtml(ariaSnapshot)}</code>
+        <button class="pw-modal-copy-btn" data-value="${escapeAttr(ariaSnapshot)}">📋 Copy</button>
       </div>
       <div class="pw-modal-row">
         <span class="pw-modal-label">🔍 CSS</span>
