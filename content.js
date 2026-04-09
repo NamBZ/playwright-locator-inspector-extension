@@ -275,8 +275,10 @@
     // Get table id
     const tableId = table.id || "";
 
+    const hasInput = td.querySelector("input") !== null || el.tagName.toLowerCase() === "input";
+
     // Return grid info object
-    return { tableId, hang, cot };
+    return { tableId, hang, cot, hasInput };
   }
 
   /**
@@ -660,7 +662,16 @@
       </div>
     `;
     if (gridSelector) {
-      const hangCot = gridSelector.hang ? `hang=${gridSelector.hang}, cot=${gridSelector.cot}` : `cot=${gridSelector.cot}`;
+      let hangCot = "";
+      if (gridSelector.hang) {
+        hangCot = `tr[hang="${gridSelector.hang}"] td[cot="${gridSelector.cot}"]`;
+      } else {
+        hangCot = `td[cot="${gridSelector.cot}"]`;
+      }
+      if (gridSelector.hasInput) {
+        hangCot += " input";
+      }
+      
       rowsHtml += `
       <div class="pw-modal-divider"></div>
       <div class="pw-modal-section-title">📊 Grid Info</div>
